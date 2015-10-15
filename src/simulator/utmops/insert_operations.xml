@@ -1,0 +1,40 @@
+<wfs:Transaction service="WFS" version="1.0.0"
+  xmlns:topp="http://www.openplans.org/topp"
+  xmlns:ogc="http://www.opengis.net/ogc" xmlns:wfs="http://www.opengis.net/wfs"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:utm="http://opengeo.org/utm"
+  xsi:schemaLocation="http://www.opengis.net/wfs
+                      http://schemas.opengis.net/wfs/2.0.0/WFS-transaction.xsd
+                      http://opengeo.org/utm">
+
+    <wfs:Insert>
+    <utm:operations_proposed>
+     <utm:unmanned>true</utm:unmanned>
+     <utm:aircraft_type>Black Hawk 2</utm:aircraft_type>
+     <utm:flight_number>AKA01</utm:flight_number>
+     <utm:notify_url>http://requestb.in/putyourURLhere</utm:notify_url>
+     <utm:primary_contact_name>Random Person</utm:primary_contact_name>
+     <utm:primary_contact_phone>111-111-1111</utm:primary_contact_phone>
+     <utm:primary_contact_email>test@test.com</utm:primary_contact_email>
+     <utm:submit_time>2014-11-10T13:00:00Z</utm:submit_time>
+     <utm:effective_time_begin>2015-09-22T13:30:00Z</utm:effective_time_begin>
+      <utm:effective_time_end>2015-09-23T21:00:00Z</utm:effective_time_end>
+      <utm:primary_phone>111-111-1111</utm:primary_phone>
+      <utm:aircraft_comments>Some interesting info 2</utm:aircraft_comments>
+      <utm:flight_geography>
+        <gml:LineString srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">
+          <gml:coordinates decimal="." cs="," ts=" ">
+           -1.533203125,1.66536033333333
+           -1.521434335,1.349609235330444
+           -1.6103515625,1.05323533033916
+           -1.533203125,1.66536033333333
+          </gml:coordinates>
+        </gml:LineString>
+      </utm:flight_geography>
+    <utm:min_altitude>50</utm:min_altitude>
+    <utm:max_altitude>150</utm:max_altitude>
+  </utm:operations_proposed>
+  </wfs:Insert>
+</wfs:Transaction>
+

@@ -1,0 +1,28 @@
+<wfs:Transaction service="WFS" version="1.0.0"
+  xmlns:topp="http://www.openplans.org/topp"
+  xmlns:ogc="http://www.opengis.net/ogc" xmlns:wfs="http://www.opengis.net/wfs"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:utm="http://opengeo.org/utm"
+  xsi:schemaLocation="http://www.opengis.net/wfs
+                      http://schemas.opengis.net/wfs/2.0.0/WFS-transaction.xsd
+                      http://opengeo.org/utm">
+
+    <wfs:Insert>
+    <utm:positions>
+      <utm:gufi>fid--39be234c_14ff08afa3d_-430a</utm:gufi>
+      <utm:heading>60</utm:heading>
+       <utm:location>
+        <gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">
+          <gml:coordinates decimal="." cs="," ts=" ">
+           -140.533203125,40.66576033778838
+          </gml:coordinates>
+        </gml:Point>
+      </utm:location>
+      <utm:speed>71</utm:speed>
+      <utm:time_received>2015-09-21T16:43:00Z</utm:time_received>
+      <utm:time_measured>2014-09-21T16:43:00Z</utm:time_measured>
+  </utm:positions>
+  </wfs:Insert>
+</wfs:Transaction>
+
