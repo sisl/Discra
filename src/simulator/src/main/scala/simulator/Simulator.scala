@@ -1,19 +1,10 @@
 package simulator
 
-import java.io._
-
 import java.text.DecimalFormat
 
 import java.util
-import java.util.Date
-
-import org.joda.time.{DateTimeZone, DateTime}
 
 import scala.collection.mutable
-
-import scala.io.Source
-
-import scala.sys.process._
 
 import kafka.serializer.StringDecoder
 
@@ -31,8 +22,6 @@ import org.apache.spark.streaming.kafka._
 
 import drone._
 import kafkapool._
-
-import scala.util.Random
 
 /**
  * Produces status update messages in the form of json strings as stipulated
@@ -92,10 +81,7 @@ object Simulator {
       Logger.getLogger("org").setLevel(Level.WARN)
     }
 
-    // submit, check, and activate plan (note: change times in .xml files)
-    val drones: mutable.HashMap[String, Drone] = Const.DummyDrones/*submitUTM()
-    checkUTM(drones)
-    activateUTM(drones)*/
+    val drones: mutable.HashMap[String, Drone] = Const.DummyDrones
 
     // local StreamingContext with 2 working threads and batch interval of 1 second
     val conf = new SparkConf()
@@ -108,7 +94,6 @@ object Simulator {
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
 
     // initialize process by sending status
-
     drones.foreach { droneElem =>
       val status = jsonStatus(droneElem._2)
       producerPool.value.send("status", status)
@@ -123,36 +108,26 @@ object Simulator {
       KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
         ssc, kafkaParams, topicsSet)
 
+    // execute advisories if one exists and simulate drone flight
     advisoryStream.map { jsonAdvisories =>
       val advisories = DroneAdvisory.getDroneAdvisories(jsonAdvisories._2)
-
       advisories.foreach { droneAdvisory =>
-        drones(droneAdvisory.gufi).nextState(droneAdvisory)
+        drones(droneAdvisory.gufi).advisory = Some(droneAdvisory)
         val status = jsonStatus(drones(droneAdvisory.gufi))
         producerPool.value.send("status", status)
-        updateUTM(drones(droneAdvisory.gufi))
       }
-
-      // note: hack to simulate 5 seconds passing; assume parallel workers
-      Thread.sleep(Const.StatusUpdatePeriod)
     }.print(0)  // need output to run ssc
+
+    // update all drone trajectories
+    drones.values.foreach(_.nextState(Const.StatusUpdatePeriod))
+
+    // hack to simulate 5 seconds passing; assume parallel workers
+    Thread.sleep(Const.StatusUpdatePeriod)
 
     ssc.checkpoint("ckpt-advisory")
 
     ssc.start()
     ssc.awaitTermination()
-  }
-
-  def getProducer(advisory: String, brokers: String): KafkaProducer[String, String] = {
-    // zookeeper connection properties
-    val props = new util.HashMap[String, Object]()
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-
-    new KafkaProducer[String, String](props)
   }
 
   case class Status(
@@ -164,6 +139,7 @@ object Simulator {
 
   val formatter = new DecimalFormat("#.###")
 
+  /** Formats drone state into JSON string. */
   def jsonStatus(drone: Drone): String = {
     val status = Status(
       flightId = drone.gufi,
@@ -176,263 +152,4 @@ object Simulator {
     write(status)
   }
 
-  def submitUTM(): mutable.HashMap[String, Drone] = {
-    val dronemap = new mutable.HashMap[String, Drone]()
-    val drones = Array(Const.Drone0, Const.Drone1, Const.Drone2)
-
-    val inname = "utmops/insert_operations.xml"
-    val outname = "utmops/insert_operations_updated.xml"
-
-    val rng = new Random()
-    val nextInt = rng.nextInt(Const.RandLatLon)
-
-    for (idrone <- 0 until Const.NDrones) {
-      replacesubmit(idrone + nextInt, inname, outname)
-
-      val cmd = Seq(
-        "curl",
-        "-v",
-        "-u", "stanford:KarNeva1!",
-        "-k",
-        "-X", "POST",
-        "-d", "@" + outname,
-        "-H", "Content-type: application/xml",
-        "https://tmiserver.arc.nasa.gov/geoserver/ows")
-
-      val res = cmd.!!
-      drones(idrone).gufi = getgufi(res, idrone)
-      dronemap += drones(idrone).gufi -> drones(idrone)
-    }
-
-    Thread.sleep(Const.TenSeconds)  // for activation catchup
-    println("successfully submitted plans for drones")
-    dronemap.keys.foreach { key: String => println("\t" + key) }
-
-    dronemap
-  }
-
-  def replacesubmit(idrone: Int, inname: String, outname: String): Unit = {
-    val infile = Source.fromFile(inname)
-    try {
-      val outfile = new File(outname)
-      val writer = new BufferedWriter(new FileWriter(outfile))
-
-      infile.getLines().foreach { line =>
-        if (line.contains("<utm:effective_time_begin>")) {
-          val now = new Date()
-          val utcString = new DateTime(now)
-            .plus(Const.TenSeconds)
-            .withZone(DateTimeZone.UTC).toString
-          writer.write("<utm:effective_time_begin>" + utcString + "</utm:effective_time_begin>")
-        } else {
-          val CoordPattern = """(.*[0-9]+.[0-9]+),(.*[0-9]+.[0-9]+)""".r
-          CoordPattern.findFirstIn(line) match {
-            case Some(xml) => xml match {
-              case CoordPattern(lat, lon) =>
-                val latdd = lat.toDouble + idrone
-                val londd = lon.toDouble + idrone
-                writer.write("           " + latdd + "," + londd)
-              case _ => writer.write(line)
-            }
-            case None => writer.write(line)
-          }
-        }
-        writer.newLine()
-      }
-
-      writer.flush()
-      writer.close()
-    } catch {
-      case ex: FileNotFoundException =>
-        throw new FileNotFoundException("couldn't find " + inname)
-      case ex: IOException =>
-        throw new IOException("couldn't read " + inname)
-    }
-  }
-
-  def getgufi(raw: String, idrone: Int): String = {
-
-    println(raw)
-
-    val GufiPattern = """.*fid--(.*)_(.*)_(.*)".*""".r
-    GufiPattern.findFirstIn(raw) match {
-      case Some(xml) =>
-        xml match {
-          case GufiPattern(a, b, c) => "fid--" + a + "_" + b + "_" + c
-          case _ => throw new Error("could not find drone " + idrone + "'s gufi")
-        }
-      case None => throw new Error("could not find drone " + idrone + "'s gufi")
-    }
-  }
-
-  def checkUTM(drones: mutable.HashMap[String, Drone]): Unit = {
-    for (gufi <- drones.keys) {
-      val cmd = Seq(
-        "curl",
-        "-v",
-        "-u", "stanford:KarNeva1!",
-        "-k",
-        "-G",
-        "https://tmiserver.arc.nasa.gov/geoserver/utm/ows?service=WFS" +
-        "&version=1.1.0&request=GetFeature&typeName=utm:operations_all&CQL_FILTER=(gufi='" +
-         gufi + "')")
-      println("submission for " + gufi + " is " + getstate(cmd.!!, gufi))
-    }
-  }
-
-  def getstate(raw: String, gufi: String): String = {
-    val StatePattern = """.*<utm:state>(.)<.*""".r
-    StatePattern.findFirstIn(raw) match {
-      case Some(xml) =>
-        xml match {
-          case StatePattern(state) => state match {
-            case "R" => "rejected"
-            case "A" => "accepted"
-            case _ => throw new Error("unknown utm state")
-          }
-          case _ => throw new Error("could not parse utm state")
-        }
-      case None => throw new Error("invalid server response; check xml for " + gufi)
-    }
-  }
-
-  def activateUTM(drones: mutable.HashMap[String, Drone]): Unit = {
-    val inname = "utmops/insert_operation_messages_all_clear.xml"
-    val outname = "utmops/insert_operation_messages_all_clear_updated.xml"
-    for (gufi <- drones.keys) {
-      replacegufi(gufi, inname, outname)
-      val cmd = Seq(
-        "curl",
-        "-v",
-        "-u", "stanford:KarNeva1!",
-        "-k",
-        "-X", "POST",
-        "-d", "@" + outname,
-        "-H", "Content-type: application/xml",
-        "https://tmiserver.arc.nasa.gov/geoserver/ows")
-      checkActivate(cmd.!!, gufi)
-    }
-  }
-
-  def replacegufi(gufi: String, inname: String, outname: String): Unit = {
-    val infile = Source.fromFile(inname)
-    try {
-      val outfile = new File(outname)
-      val writer = new BufferedWriter(new FileWriter(outfile))
-
-      infile.getLines().foreach { line =>
-        if (line.contains("<utm:gufi>")) {
-          writer.write("      <utm:gufi>" + gufi + "</utm:gufi>")
-        } else {
-          writer.write(line)
-        }
-        writer.newLine()
-      }
-
-      writer.flush()
-      writer.close()
-    } catch {
-      case ex: FileNotFoundException =>
-        throw new FileNotFoundException("couldn't find " + inname)
-      case ex: IOException =>
-        throw new IOException("couldn't read " + inname)
-    }
-  }
-
-  def checkActivate(raw: String, gufi: String): Unit = {
-    val StatePattern = """.*<wfs:Status>.*<wfs:(.*)/>.*</wfs:Status>.*""".r
-    StatePattern.findFirstIn(raw) match {
-      case Some(xml) =>
-        xml match {
-          case StatePattern(status) => status match {
-            case "SUCCESS" => println("successful activation")
-            case "FAILED" => println("unsuccessful activation")
-            case _ => throw new Error("unknown wfs status")
-          }
-          case _ => throw new Error("could not parse wfs status")
-        }
-      case None => throw new Error("could not find wfs status for " + gufi)
-    }
-  }
-
-  /** Updates UTM using a dummy set of lat-long coordinates (dec deg). */
-  def updateUTM(drone: Drone): Unit = {
-    val inname = "utmops/insert_positions.xml"
-    val outname = "utmops/insert_positions_updated.xml"
-    replacegufi(drone.gufi, inname, outname)
-    replacecoord(drone.latitude, drone.longitude, inname, outname)
-
-    val cmd = Seq(
-      "curl",
-      "-v",
-      "-u", "stanford:KarNeva1!",
-      "-k",
-      "-X", "POST",
-      "-d", "@" + outname,
-      "-H", "Content-type: application/xml",
-      "https://tmiserver.arc.nasa.gov/geoserver/ows")
-    checkUpdate(drone.gufi, cmd.!!)
-  }
-
-  def replacecoord(lat: Double, lon: Double, inname: String, outname: String): Unit = {
-    val infile = Source.fromFile(inname)
-    try {
-      val outfile = new File(outname)
-      val writer = new BufferedWriter(new FileWriter(outfile))
-
-      infile.getLines().foreach { line =>
-        val CoordPattern = """(.*[0-9]+.[0-9]+),(.*[0-9]+.[0-9]+)""".r
-        CoordPattern.findFirstIn(line) match {
-          case Some(xml) => xml match {
-            case CoordPattern(latact, lonact) =>
-              val latitude = getlatitude(lat + fromlatitude(latact.toDouble))
-              val longitude = getlongitude(lon +
-                fromlongitude(lonact.toDouble, math.cos(latitude)), latitude)
-              writer.write("           " + latitude + "," + longitude)
-            case _ => writer.write(line)
-          }
-          case None => writer.write(line)
-        }
-        writer.newLine()
-      }
-
-      writer.flush()
-      writer.close()
-    } catch {
-      case ex: FileNotFoundException =>
-        throw new FileNotFoundException("couldn't find " + inname)
-      case ex: IOException =>
-        throw new IOException("couldn't read " + inname)
-    }
-  }
-
-  // quick and dirty estimate of latitude
-  def getlatitude(lat: Double): Double =
-    lat / Const.LatLonMagic
-
-  // quick and dirty estimate of longitude
-  def getlongitude(lon: Double, latact: Double): Double =
-    lon / (Const.LatLonMagic * math.cos(latact))
-
-  def fromlatitude(lat: Double): Double =
-    lat * Const.LatLonMagic
-
-  def fromlongitude(lon: Double, latact: Double): Double =
-    lon * Const.LatLonMagic * math.cos(latact)
-
-  def checkUpdate(gufi: String, raw: String): Unit = {
-    val StatePattern = """.*<wfs:Status>.*<wfs:(.*)/>.*</wfs:Status>.*""".r
-    StatePattern.findFirstIn(raw) match {
-      case Some(xml) =>
-        xml match {
-          case StatePattern(status) => status match {
-            case "SUCCESS" => println("successful update")
-            case "FAILED" => println("unsuccessful update")
-            case _ => throw new Error("unknown wfs update status")
-          }
-          case _ => throw new Error("could not parse wfs update status")
-        }
-      case None => throw new Error("could not find wfs update status for " + gufi)
-    }
-  }
 }

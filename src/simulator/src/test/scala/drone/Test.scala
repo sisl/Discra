@@ -40,6 +40,7 @@ object Test {
     println("\tturnRateConflict: " + noise.noiseTurnRateConflict.toDegrees + " deg/s")
   }
 
+  /** Plots drone trajectories for visual inspection. */
   def testDroneDynamics(): Unit = {
     val drone0 = Drone("fid-test0", 0.0, 0.0, 0.0, 10.0, TestConst.NoiseSample)
     val drone1 = Drone("fid-test1", 0.0, 0.0, 0.0, 15.0, TestConst.NoiseSample)

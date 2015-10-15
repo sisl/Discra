@@ -78,9 +78,8 @@ object Ingestor {
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
 
     // note: once available, ingest UTM publication stream and produce conflict messages
-    // dummyProducer(conflict, producer)  // leave here for local testing
-    // simProducer(conflict, producerPool.value, ssc)  // leave here for local testing
-    utmProducer(conflict, producerPool.value, ssc)
+    simProducer(conflict, producerPool.value, ssc)  // leave here for local testing
+    // utmProducer(conflict, producerPool.value, ssc)
   }
 
   case class Status(
@@ -134,31 +133,6 @@ object Ingestor {
     status.lon + "%" +
     status.heading + "%" +
     status.speed + ","
-  }
-
-  /** Produces dummy conflicts; for testing purposes. */
-  def dummyProducer(
-      topic: String,
-      producer: KafkaProducer[String, String],
-      nconflict: Int = Const.NConflict): Unit = {
-
-    val randgen = new Random()
-    val formatter = new DecimalFormat("#.###")
-
-    val conflicts = new Array[String](nconflict)
-
-    while (true) {
-      val currentNConflict = randgen.nextInt(1 + nconflict)  // at least 1 conflict
-      for (iconflict <- 0 until currentNConflict) {
-        conflicts(iconflict) = getDummyConflict(randgen, formatter)
-      }
-      val conflictString = conflicts.slice(0, currentNConflict) mkString " "
-
-      val message = new ProducerRecord[String, String](topic, null, conflictString)
-      producer.send(message)
-
-      Thread.sleep(Const.MessagePeriod)
-    }
   }
 
   def getDummyConflict(randgen: Random, formatter: DecimalFormat): String = {

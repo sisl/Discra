@@ -1,5 +1,6 @@
 package drone
 
+/** Simulated drone object with Dubin's kinematics model. */
 class Drone(
     var gufi: String,
     var latitude: Double,
@@ -9,24 +10,32 @@ class Drone(
     val noise: Noise)
   extends Serializable {
 
+  var advisory: Option[DroneAdvisory] = None
+
+  /** Simulates drone's next state based on whether an advisory exists. */
   def nextState(dt: Double): Unit = {
-    this.whiteNoise(dt, noise.noiseTurnRateClear)
-  }
-
-  def nextState(advisory: DroneAdvisory): Unit = {
-    if (gufi != advisory.gufi) {
-      throw new IllegalArgumentException("drone and advisory gufi's do not match")
-    } else {
-      if (advisory.clearOfConflict) {
-        this.whiteNoise(advisory.period, noise.noiseTurnRateClear)
-      } else if (advisory.turnRate == 0.0) {
-        this.whiteNoise(advisory.period, noise.noiseTurnRateConflict)
-      } else {
-        this.turn(advisory.period, advisory.turnRate + noise.noiseTurnRateConflict)
-      }
+    // execute advisory if one exists
+    this.advisory match {
+      case Some(adv) =>
+        if (gufi != adv.gufi) {
+          throw new IllegalArgumentException("drone and advisory gufi's do not match")
+        } else {
+          if (adv.clearOfConflict) {
+            this.whiteNoise(adv.period, noise.noiseTurnRateClear)
+          } else if (adv.turnRate == 0.0) {
+            this.whiteNoise(adv.period, noise.noiseTurnRateConflict)
+          } else {
+            this.turn(adv.period, adv.turnRate + noise.noiseTurnRateConflict)
+          }
+        }
+      case None => this.whiteNoise(dt, noise.noiseTurnRateClear)
     }
+
+    // reset advisory
+    this.advisory = None
   }
 
+  /** Simulate drone going straight with white noise acceleration model. */
   private def whiteNoise(dt: Double, noiseTurnRate: Double): Unit = {
     if (noiseTurnRate == 0.0) {
       this.straight(dt)
@@ -35,6 +44,7 @@ class Drone(
     }
   }
 
+  /** Simulate drone going straight under conflict advisory. */
   private def straight(dt: Double): Unit = {
     latitude += speed * math.cos(heading) * dt + noise.noiseLatitude
     longitude += speed * math.sin(heading) * dt + noise.noiseLongitude
@@ -42,6 +52,7 @@ class Drone(
     speed += noise.noiseSpeed
   }
 
+  /** Simulate drone banking/turning under conflict advisory. */
   private def turn(dt: Double, turnRate: Double): Unit = {
     // TODO: check turn rate vs bank angle direction definition
     val changeHeading = -turnRate * dt

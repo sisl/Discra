@@ -115,8 +115,10 @@ class Grid(
     weight2(0) = 1.0
   }
 
-  /** Uses the indices and weights from interpolants to obtain an interpolated
-    * value from <refValues>. */
+  /**
+   * Uses the indices and weights from interpolants to obtain an interpolated
+   * value from <refValues>.
+   */
   def interpolate(point: Array[Double], refValues: Array[Double]): Double = {
     val (indices, weights) = interpolants(point)
     var result = 0.0
