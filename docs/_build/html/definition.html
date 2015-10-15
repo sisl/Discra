@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Problem definition &mdash; PLite.jl 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="PLite.jl 1.0 documentation" href="index.html"/>
+        <link rel="next" title="Solver selection" href="solver.html"/>
+        <link rel="prev" title="Installation" href="install.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+          <a href="index.html" class="fa fa-home"> PLite.jl</a>
+        
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Problem definition</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mdp">MDP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#state-space">State space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#action-space">Action space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transition">Transition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reward">Reward</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="solver.html">Solver selection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="solver.html#solvers">Solvers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="solution.html">Solution</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">PLite.jl</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Problem definition</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/definition.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="problem-definition">
+<h1>Problem definition<a class="headerlink" href="#problem-definition" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mdp">
+<h2>MDP<a class="headerlink" href="#mdp" title="Permalink to this headline">¶</a></h2>
+<p>In a Markov decision process (MDP), an agent chooses action <em>a</em> based on observing state <em>s</em>. The agent then receives a reward <em>r</em>. The state evolves stochastically based on the current state and action taken by the agent. Note that the next state depends only on the current state and action, and not on any prior state or action. This assumption is known as the Markov assumption.</p>
+<p>An MDP is typically defined by the tuple <em>(S, A, T, R)</em>, where</p>
+<ul class="simple">
+<li><em>S</em> is the state space</li>
+<li><em>A</em> is the action space</li>
+<li><em>T(s, a, s&#8217;)</em> is the transition function that gives the probability of reaching state <em>s</em>&#8216; from state s by taking action <em>a</em></li>
+<li><em>R(s, a)</em> is the reward function that gives a scalar value for taking action <em>a</em> at state <em>s</em>.</li>
+</ul>
+<p>To define an MDP, simply type the following.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">mdp</span> <span class="o">=</span> <span class="n">MDP</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="state-space">
+<h2>State space<a class="headerlink" href="#state-space" title="Permalink to this headline">¶</a></h2>
+<p>The state space <em>S</em> is the set of all states, and it can be continuous and thus infinite. PLite provides the ability to define states simply as a set of all states or in a factored representation.</p>
+<p>To define <em>S</em> the latter way, simply define the range or the array of possible values for the state variable. For instance, to define range of values for the continuous state variable <em>x</em> from 0 to 100, we simply type the following.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that we stringified <em>x</em> as <code class="docutils literal"><span class="pre">&quot;x&quot;</span></code>. Internally, this syntax allows <code class="docutils literal"><span class="pre">mdp</span></code> to keep an internal representation of the variable.</p>
+<p>At this point, we may be tempted to discretize the variable and use something like value iteration to solve the MDP. The reason we don&#8217;t provide the discretization option is because discretization is an approximation technique that should be considered together with the solution method. Yes, you may decide to discretize it an input the discretized values as an array input (see below). But we emphasize that at this point, we&#8217;re only worried about defining a mathematical formulation of the problem.</p>
+<p>To define a set of discrete values for a discrete state variable <em>direction</em> that can take on the values <em>north</em>, <em>south</em>, <em>east</em>, and <em>west</em>, we simply type the following.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;direction&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;north&quot;</span><span class="p">,</span> <span class="s">&quot;south&quot;</span><span class="p">,</span> <span class="s">&quot;east&quot;</span><span class="p">,</span> <span class="s">&quot;weast&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>If you made a mistake, as we did above with the spelling of <em>west</em>, we can override the existing definition of the state variable <em>direction</em> by redefining it as follows.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;direction&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;north&quot;</span><span class="p">,</span> <span class="s">&quot;south&quot;</span><span class="p">,</span> <span class="s">&quot;east&quot;</span><span class="p">,</span> <span class="s">&quot;west&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>PLite will provide a warning whenever you redefine a previously named variable.</p>
+<p>To define <em>S</em> as a set of all states, we can simply define a single discrete state variable and type the following.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;S&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;v1&quot;</span><span class="p">,</span> <span class="s">&quot;v2&quot;</span><span class="p">,</span> <span class="s">&quot;v3&quot;</span><span class="p">,</span> <span class="s">&quot;v4&quot;</span><span class="p">,</span> <span class="s">&quot;v5&quot;</span><span class="p">,</span> <span class="s">&quot;v6&quot;</span><span class="p">,</span> <span class="s">&quot;v7&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal"><span class="pre">&quot;S&quot;</span></code> is not a special keyword. It&#8217;s just a state variable like any other, and you&#8217;ll have to take care to treat it as a state variable in defining the transition and reward functions. The nice thing is PLite allows you to work with both factored and unfactored MDP state space representations.</p>
+</div>
+<div class="section" id="action-space">
+<h2>Action space<a class="headerlink" href="#action-space" title="Permalink to this headline">¶</a></h2>
+<p>The action space <em>A</em> is the set of all actions. Like <em>S</em>, it can be continuous and thus infinite. The definition of action variables follow that of state variables, which means that PLite allows both factored and unfactored action space definitions.</p>
+<p>To define a continuous and a discrete action variable <em>bankangle</em> and <em>move</em>, respectively, we type</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">actionvariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;bankangle&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">)</span>
+<span class="n">actionvariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;up&quot;</span><span class="p">,</span> <span class="s">&quot;down&quot;</span><span class="p">,</span> <span class="s">&quot;left&quot;</span><span class="p">,</span> <span class="s">&quot;right&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transition">
+<h2>Transition<a class="headerlink" href="#transition" title="Permalink to this headline">¶</a></h2>
+<p>PLite provides two ways to define a transition model. Depending on the problem, it may be easier to define the transition model one way or another.</p>
+<div class="section" id="t-s-a-s-type-transition">
+<h3><em>T(s, a, s&#8217;)</em> type transition<a class="headerlink" href="#t-s-a-s-type-transition" title="Permalink to this headline">¶</a></h3>
+<p>The first method follows the standard definition that returns a probability value between 0 and 1. Suppose we have the following definition of an MDP.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="c"># constants</span>
+<span class="kd">const</span> <span class="n">MinX</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="kd">const</span> <span class="n">MaxX</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c"># mdp definition</span>
+<span class="n">mdp</span> <span class="o">=</span> <span class="n">MDP</span><span class="p">()</span>
+
+<span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">MinX</span><span class="p">,</span> <span class="n">MaxX</span><span class="p">)</span>  <span class="c"># continuous</span>
+<span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;yes&quot;</span><span class="p">,</span> <span class="s">&quot;no&quot;</span><span class="p">])</span>  <span class="c"># discrete</span>
+
+<span class="n">actionvariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;W&quot;</span><span class="p">,</span> <span class="s">&quot;E&quot;</span><span class="p">,</span> <span class="s">&quot;stop&quot;</span><span class="p">])</span>  <span class="c"># discrete</span>
+</pre></div>
+</div>
+<p>We want to define a transition function that takes a state-action-next state triplet <em>(s, a, s&#8217;)</em> and returns the probability of starting in state <em>s</em>, taking action <em>a</em>, and ending up in state <em>s</em>&#8216;. Internally, PLite needs to match the defined state and action variables with the corresponding arguments for the transition function. To do this, we need to pass in an array of the argument names in the order they are to be input to the defined transition function.</p>
+<p>An example of a <em>T(s, a, s&#8217;)</em> type transition function is as follows. Here, the state variables are named <code class="docutils literal"><span class="pre">&quot;x&quot;</span></code> and <code class="docutils literal"><span class="pre">&quot;goal&quot;</span></code>, and the action variable is named <code class="docutils literal"><span class="pre">&quot;move&quot;</span></code>. Note that although <em>s</em>&#8216; is a different variable from <em>s</em>, they share the variable names <code class="docutils literal"><span class="pre">&quot;x&quot;</span></code> and <code class="docutils literal"><span class="pre">&quot;goal&quot;</span></code>. So even though the <code class="docutils literal"><span class="pre">mytransition</span></code> function signature is</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="k">function</span><span class="nf"> mytransition</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span>
+    <span class="n">goal</span><span class="p">::</span><span class="n">String</span><span class="p">,</span>
+    <span class="n">move</span><span class="p">::</span><span class="n">String</span><span class="p">,</span>
+    <span class="n">xp</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span>
+    <span class="n">goalp</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>the array of (ordered) argument names is <code class="docutils literal"><span class="pre">[&quot;x&quot;,</span> <span class="pre">&quot;goal&quot;,</span> <span class="pre">&quot;move&quot;,</span> <span class="pre">&quot;x&quot;,</span> <span class="pre">&quot;goal&quot;]</span></code> rather than <code class="docutils literal"><span class="pre">[&quot;x&quot;,</span> <span class="pre">&quot;goal&quot;,</span> <span class="pre">&quot;move&quot;,</span> <span class="pre">&quot;xp&quot;,</span> <span class="pre">&quot;goalp&quot;]</span></code>. Below is the full listing that defines the transition for <code class="docutils literal"><span class="pre">mdp</span></code>.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">transition</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span>
+  <span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">],</span>  <span class="c"># note |xp| is an &quot;x&quot; variable</span>
+                                       <span class="c"># note (s,a,s&#39;) order</span>
+  <span class="k">function</span><span class="nf"> mytransition</span><span class="p">(</span>
+      <span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span>
+      <span class="n">goal</span><span class="p">::</span><span class="n">String</span><span class="p">,</span>
+      <span class="n">move</span><span class="p">::</span><span class="n">String</span><span class="p">,</span>
+      <span class="n">xp</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span>
+      <span class="n">goalp</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+
+    <span class="k">function</span><span class="nf"> internaltransition</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span> <span class="n">goal</span><span class="p">::</span><span class="n">String</span><span class="p">,</span> <span class="n">move</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+      <span class="k">function</span><span class="nf"> isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">MaxX</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">StepX</span>
+          <span class="k">return</span> <span class="s">&quot;yes&quot;</span>
+        <span class="k">else</span>
+          <span class="k">return</span> <span class="s">&quot;no&quot;</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+      <span class="k">if</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">goal</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span>
+        <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+      <span class="k">end</span>
+
+      <span class="k">if</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;E&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+          <span class="k">return</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+        <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+          <span class="k">return</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.2</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+        <span class="k">else</span>
+          <span class="k">return</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+        <span class="k">end</span>
+      <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;W&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+          <span class="k">return</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">)]</span>
+        <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+          <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+        <span class="k">else</span>
+          <span class="k">return</span> <span class="p">[</span>
+            <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">),</span>
+            <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+        <span class="k">end</span>
+      <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;stop&quot;</span>
+        <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="n">statepprobs</span> <span class="o">=</span> <span class="n">internaltransition</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">move</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">statepprob</span> <span class="k">in</span> <span class="n">statepprobs</span>
+      <span class="k">if</span> <span class="n">xp</span> <span class="o">==</span> <span class="n">statepprob</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="n">goalp</span> <span class="o">==</span> <span class="n">statepprob</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">statepprob</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+  <span class="k">end</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="t-s-a-type-transition">
+<h3><em>T(s, a)</em> type transition<a class="headerlink" href="#t-s-a-type-transition" title="Permalink to this headline">¶</a></h3>
+<p>The second way to define a transition model is to take in a state-action pair and return the set of all possible next states with their corresponding probabilities. Again, we need to pass an array of argument names in the order the <em>(s, a)</em> pair is defined to the transition function. Below is the full listing that defines the transition this way. It is mathematically equivalent to the <em>T(s, a, s&#8217;)</em> type transition defined above.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">transition</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span>
+  <span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">],</span>
+  <span class="k">function</span><span class="nf"> mytransition</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span> <span class="n">goal</span><span class="p">::</span><span class="n">AbstractString</span><span class="p">,</span> <span class="n">move</span><span class="p">::</span><span class="n">AbstractString</span><span class="p">)</span>
+    <span class="k">function</span><span class="nf"> isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">MaxX</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">StepX</span>
+        <span class="k">return</span> <span class="s">&quot;yes&quot;</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="s">&quot;no&quot;</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">goal</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span>
+      <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;E&quot;</span>
+      <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.2</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+      <span class="k">end</span>
+    <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;W&quot;</span>
+      <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">)]</span>
+      <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+        <span class="k">return</span> <span class="p">[</span>
+        <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+        <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">end</span>
+    <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;stop&quot;</span>
+      <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reward">
+<h2>Reward<a class="headerlink" href="#reward" title="Permalink to this headline">¶</a></h2>
+<p>The reward function takes in a state-action pair <em>(s, a)</em> and returns a scalar value indicating the expected reward received when executing action <em>a</em> from state <em>s</em>. We assume that the reward function is a deterministic function of <em>s</em> and <em>a</em>.</p>
+<p>The process of defining the reward function is similar to that for the <em>T(s, a)</em> type transition function. We need to pass in an ordered array of variable names for PLite&#8217;s internal housekeeping.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">reward</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span>
+  <span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">],</span>  <span class="c"># note (s,a) order</span>
+                          <span class="c"># note consistency of variables order with transition</span>
+  <span class="k">function</span><span class="nf"> myreward</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span> <span class="n">goal</span><span class="p">::</span><span class="n">String</span><span class="p">,</span> <span class="n">move</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">goal</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;stop&quot;</span>
+      <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">else</span>
+      <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="solver.html" class="btn btn-neutral float-right" title="Solver selection">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="install.html" class="btn btn-neutral" title="Installation"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Hao Yi Ong.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

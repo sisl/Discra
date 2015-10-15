@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Parallel Value Iteration &mdash; PLite.jl 1.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="PLite.jl 1.0 documentation" href="index.html"/>
+        <link rel="up" title="Solver selection" href="solver.html"/>
+        <link rel="next" title="Monte-Carlo Tree Search" href="smcts.html"/>
+        <link rel="prev" title="Serial Value iteration" href="svi.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+          <a href="index.html" class="fa fa-home"> PLite.jl</a>
+        
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="definition.html">Problem definition</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="definition.html#mdp">MDP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="definition.html#state-space">State space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="definition.html#action-space">Action space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="definition.html#transition">Transition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="definition.html#reward">Reward</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="solver.html">Solver selection</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="solver.html#solvers">Solvers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="solution.html">Solution</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">PLite.jl</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="solver.html">Solver selection</a> &raquo;</li>
+      
+    <li>Parallel Value Iteration</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/pvi.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="parallel-value-iteration">
+<h1>Parallel Value Iteration<a class="headerlink" href="#parallel-value-iteration" title="Permalink to this headline">¶</a></h1>
+<p>To reap the benefits of Julia&#8217;s parallel computing framework for value iteration, we need a few more steps. The main issue we have to get around is code availability when we add processes. But we&#8217;ll skip an in-depth explanation and just go straight to what we can do.</p>
+<p>We consider a quick and dirty example of running the exact same code as in the MDP with <em>T(s, a)</em> type transition on PLite&#8217;s parallel value iteration solver. First, we wrap our existing code under the module <code class="docutils literal"><span class="pre">ExampleModule</span></code> (you can name it whatever you want), and save it under the file name <code class="docutils literal"><span class="pre">ExampleModule.jl</span></code>. As our naming scheme suggests, the module and file should share the same name. Below is what should be saved to the file.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="k">module</span> <span class="n">ExampleModule</span>
+
+<span class="k">export</span>
+  <span class="n">mdp</span><span class="p">,</span>
+  <span class="n">solver</span><span class="p">,</span>
+  <span class="n">solve</span><span class="p">,</span>
+  <span class="n">getpolicy</span>
+
+<span class="k">using</span> <span class="n">PLite</span>
+
+<span class="c"># constants</span>
+<span class="kd">const</span> <span class="n">MinX</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="kd">const</span> <span class="n">MaxX</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="kd">const</span> <span class="n">StepX</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="c"># mdp definition</span>
+<span class="n">mdp</span> <span class="o">=</span> <span class="n">MDP</span><span class="p">()</span>
+
+<span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">MinX</span><span class="p">,</span> <span class="n">MaxX</span><span class="p">)</span>  <span class="c"># continuous</span>
+<span class="n">statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;no&quot;</span><span class="p">,</span> <span class="s">&quot;yes&quot;</span><span class="p">])</span>  <span class="c"># discrete</span>
+
+<span class="n">actionvariable</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;W&quot;</span><span class="p">,</span> <span class="s">&quot;E&quot;</span><span class="p">,</span> <span class="s">&quot;stop&quot;</span><span class="p">])</span>  <span class="c"># discrete</span>
+
+<span class="n">transition</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span>
+  <span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">],</span>
+  <span class="k">function</span><span class="nf"> mytransition</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span> <span class="n">goal</span><span class="p">::</span><span class="n">AbstractString</span><span class="p">,</span> <span class="n">move</span><span class="p">::</span><span class="n">AbstractString</span><span class="p">)</span>
+    <span class="k">function</span><span class="nf"> isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">MaxX</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">StepX</span>
+        <span class="k">return</span> <span class="s">&quot;yes&quot;</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="s">&quot;no&quot;</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">goal</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span>
+      <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;E&quot;</span>
+      <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.2</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">)]</span>
+      <span class="k">end</span>
+    <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;W&quot;</span>
+      <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">MaxX</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">)]</span>
+      <span class="k">elseif</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">MinX</span>
+        <span class="k">return</span> <span class="p">[</span>
+        <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.9</span><span class="p">),</span>
+        <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="p">[</span>
+          <span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.8</span><span class="p">),</span>
+          <span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">StepX</span><span class="p">)],</span> <span class="mf">0.1</span><span class="p">)]</span>
+      <span class="k">end</span>
+    <span class="k">elseif</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;stop&quot;</span>
+      <span class="k">return</span> <span class="p">[([</span><span class="n">x</span><span class="p">,</span> <span class="n">isgoal</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="mf">1.0</span><span class="p">)]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="p">)</span>
+
+<span class="n">reward</span><span class="o">!</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span>
+  <span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="s">&quot;goal&quot;</span><span class="p">,</span> <span class="s">&quot;move&quot;</span><span class="p">],</span>
+  <span class="k">function</span><span class="nf"> myreward</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="kt">Float64</span><span class="p">,</span> <span class="n">goal</span><span class="p">::</span><span class="n">String</span><span class="p">,</span> <span class="n">move</span><span class="p">::</span><span class="n">String</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">goal</span> <span class="o">==</span> <span class="s">&quot;yes&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">move</span> <span class="o">==</span> <span class="s">&quot;stop&quot;</span>
+      <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">else</span>
+      <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="p">)</span>
+
+<span class="c"># solver options</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">ParallelValueIteration</span><span class="p">()</span>
+<span class="n">discretize_statevariable</span><span class="o">!</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">StepX</span><span class="p">)</span>
+
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>On top of the keyword arguments available to <code class="docutils literal"><span class="pre">SerialValueIteration</span></code>, <code class="docutils literal"><span class="pre">ParallelValueIteration</span></code> has an additional <code class="docutils literal"><span class="pre">nthreads</span></code> keyword argument. The default value is <code class="docutils literal"><span class="pre">CPU_CORES</span> <span class="pre">/</span> <span class="pre">2</span></code>.</p>
+<p><code class="docutils literal"><span class="pre">CPU_CORES</span></code> is a Julia standard library constant, and it defaults to the number of CPU cores in your system. But the number of cores given usually includes virtual cores (e.g., Intel processors), so we divide by two to obtain the number of physical cores. There isn&#8217;t an issue with increasing the number of cores. But since we have the same number of cores doing the same number of work, there won&#8217;t be an increase in efficiency. In fact, with greater number of threads there may be more overhead and runtime processes. As such, we recommend using as many threads as there are physical cores on the machine. In the case of the parallel solver, we can define</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="n">solver</span> <span class="o">=</span> <span class="n">ParallelValueIteration</span><span class="p">(</span>
+  <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+  <span class="n">maxiter</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+  <span class="n">discount</span><span class="o">=</span><span class="mf">0.999</span><span class="p">,</span>
+  <span class="n">verbose</span><span class="o">=</span><span class="n">false</span><span class="p">,</span>
+  <span class="n">nthreads</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As in the serial solver, PLite needs a definition of the discretization scheme.</p>
+<p>Notice that there are two modifications to the code being wrapped (in addition to putting it in <code class="docutils literal"><span class="pre">ExampleModule</span></code> and using <code class="docutils literal"><span class="pre">ParallelValueIteration</span></code>):</p>
+<ol class="arabic simple">
+<li>we removed the <code class="docutils literal"><span class="pre">solve</span></code> bit that generated the solution</li>
+<li>we added the <code class="docutils literal"><span class="pre">export</span></code> keyword that makes the objects and functions available to the user (either in on the console or the Jupyter notebook)</li>
+</ol>
+<div class="highlight-julia"><div class="highlight"><pre><span class="k">export</span>
+  <span class="n">mdp</span><span class="p">,</span>
+  <span class="n">solver</span><span class="p">,</span>
+  <span class="n">solve</span><span class="p">,</span>
+  <span class="n">getpolicy</span>
+</pre></div>
+</div>
+<p>On the console or Jupyter notebook, we then input the following.</p>
+<div class="highlight-julia"><div class="highlight"><pre><span class="kd">const</span> <span class="n">NThreads</span> <span class="o">=</span> <span class="n">int</span><span class="p">(</span><span class="n">CPU_CORES</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">addprocs</span><span class="p">(</span><span class="n">NThreads</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c"># -1 to account for existing process</span>
+
+<span class="k">using</span> <span class="n">ExampleModule</span>
+
+<span class="c"># generate results</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice we add the desired number of processes before loading the module. This sequence of code evaluation allows all processes to get the code on ExampleModule. We then call <code class="docutils literal"><span class="pre">solve</span></code> on the mdp and solver to obtain the solution.</p>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="smcts.html" class="btn btn-neutral float-right" title="Monte-Carlo Tree Search">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="svi.html" class="btn btn-neutral" title="Serial Value iteration"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Hao Yi Ong.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
