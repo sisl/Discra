@@ -78,7 +78,6 @@ object Streamer {
       .set("spark.executor.memory", "1g")
       .set("spark.rdd.compress","true")
 
-
     val ssc = new StreamingContext(conf, Seconds(1))
     val policy = ssc.sparkContext.broadcast(getPolicy())
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
@@ -89,8 +88,10 @@ object Streamer {
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers)
 
-    val rawConflicts = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
-        ssc, kafkaParams, topicsSet)
+    val rawConflicts =
+      KafkaUtils.createDirectStream[
+        String, String, StringDecoder, StringDecoder](
+          ssc, kafkaParams, topicsSet)
 
     // whitespace-separated set of conflicts, which are in turn comma-separated DroneGlobalStates
     val advisories = rawConflicts

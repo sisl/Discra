@@ -1,6 +1,6 @@
 package spark.driver
 
-/** Test  */
+/** Test local server. */
 object Test {
   def main(args: Array[String]): Unit = {
     println("INFO beginning unit tests")

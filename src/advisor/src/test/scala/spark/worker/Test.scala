@@ -168,13 +168,18 @@ object Test {
         DroneGlobalState(1000.0, 800.0, 3.141592653589793, 10.0),
         DroneGlobalState(1000.0, -800.0, 3.141592653589793, 10.0))
 
+    // range of x and y coordinates
     val xs = linrange(-2500.0, 2500.0, Const.Resolution)
     val ys = linrange(-2500.0, 2500.0, Const.Resolution)
 
     for (ix <- xs.indices; iy <- ys.indices) {
+
       drones(0).latitude = xs(ix)
       drones(0).longitude = ys(iy)
+
       val jointAction = policy.searchPolicy(drones)._1
+
+      // assign color for action based on a gradient
       for (idrone <- jointAction.indices) {
         if (jointAction(idrone) == Const.ClearOfConflict) {
           heatmaps(idrone)(ix, iy) = Const.ColorClearOfConflict
@@ -190,6 +195,7 @@ object Test {
   def linrange(start: Double, end: Double, numElem: Int) =
     for (i <- 0 until numElem) yield start + i * (end - start) / (numElem - 1)
 
+  /** Generates a simple multi-aircraft scenario for timing purpoeses. */
   def timePolicy(policy: Policy): Unit = {
     val drones =
       Array(

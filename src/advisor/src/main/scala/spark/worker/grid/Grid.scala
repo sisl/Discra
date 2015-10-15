@@ -2,6 +2,7 @@ package spark.worker.grid
 
 import breeze.numerics.pow
 
+/** Object for grid used in multilinear interpolation. */
 class Grid(
     private val cutPoints: Array[Array[Double]],
     private val cutCounts: Array[Int],
@@ -16,6 +17,7 @@ class Grid(
 
   def dimensions = cutCounts.length
 
+  /** Converts grid index to actual state. */
   def ind2x(ind: Int): Array[Double] = {
     var currInd = ind
     val point = new Array[Double](dimensions)
@@ -35,6 +37,7 @@ class Grid(
     point
   }
 
+  /** Returns the interpolated grid indices and their corresponding weights. */
   def interpolants(point: Array[Double]): (Array[Int], Array[Double]) = {
     resetIndexAndWeight()
 
@@ -112,6 +115,8 @@ class Grid(
     weight2(0) = 1.0
   }
 
+  /** Uses the indices and weights from interpolants to obtain an interpolated
+    * value from <refValues>. */
   def interpolate(point: Array[Double], refValues: Array[Double]): Double = {
     val (indices, weights) = interpolants(point)
     var result = 0.0

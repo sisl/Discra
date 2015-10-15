@@ -10,6 +10,7 @@ import breeze.linalg.{DenseMatrix, SparseVector, VectorBuilder, csvread, min}
 import spark.worker.dronestate._
 import spark.worker.grid._
 
+/** Policy object that implements the conflict resolution algorithm. */
 class Policy(
     private val utility: DenseMatrix[Double],
     private val actionSet: Array[Double],
@@ -22,6 +23,7 @@ class Policy(
   final val IndexTerminalState = DimensionStateSpace - 1
   final val IndexCOC = DimensionActionSpace - 1
 
+  /** Alternating maximization iterative search for pairwise encounters. */
   def searchPolicy(drones: Array[DroneGlobalState]): (Array[Double], Double, Int) = {
     val currActionIndices = Array.fill[Int](drones.length)(IndexCOC)
     val bestActionIndices = Array.fill[Int](drones.length)(IndexCOC)
@@ -35,7 +37,7 @@ class Policy(
     while (niter < Policy.MaxIterSearch && solutionImproving) {
       solutionImproving = false
 
-      val droneOrder = shuffle(drones.indices.toList) // for fairness
+      val droneOrder = shuffle(drones.indices.toList)  // for fairness
       for (idrone <- droneOrder) {
         val (actionIndex, util) = maxmin(idrone, drones, currActionIndices)
         utils(idrone) = util
@@ -56,6 +58,7 @@ class Policy(
     (idx2val(bestActionIndices, actionSet), bestUtil, niter)
   }
 
+  /** Compute best of worst-case (max-min) utility for all pairwise encounters with ownship. */
   def maxmin(
       iownship: Int,
       drones: Array[DroneGlobalState],
@@ -86,6 +89,7 @@ class Policy(
     (indmax(utils), utils.max)
   }
 
+  /** Map continuous drone flight state to multilinear interpolated internal representation. */
   def getBeliefs(iownship: Int, drones: Array[DroneGlobalState]): Array[SparseVector[Double]] = {
     val beliefs = new Array[SparseVector[Double]](drones.length)
     for (intruder <- drones.indices) {
@@ -97,6 +101,7 @@ class Policy(
     beliefs
   }
 
+  /** Helper function for getBeliefs. */
   def computeBelief(
       beliefs: Array[SparseVector[Double]],
       localState: DroneLocalState,
@@ -115,13 +120,10 @@ class Policy(
     beliefs(intruder) = beliefBuilder.toSparseVector
   }
 
+  /** Converts individual action indices into pairwise action index. */
   def getJointActionIndex(ownshipAction: Int, intruderAction: Int): Int = {
     // column-major order with ownshipAction = row, intruderAction = col
     ownshipAction * DimensionActionSpace + intruderAction
-  }
-
-  def consensus(iaction: Int, suggestedActionIndex: Int): Boolean = {
-    false
   }
 
   def idx2val(indices: Array[Int], refValues: Array[Double]) =
@@ -146,6 +148,7 @@ object Policy {
     new Policy(utility, actionSet, grid)
   }
 
+  /** Loads the utility lookup table into memory. */
   def readUtility(filename: String): Option[DenseMatrix[Double]] = {
     def trycsvread (csvfilename: String): Try[DenseMatrix[Double]] =
       Try(csvread(new File(filename)))
