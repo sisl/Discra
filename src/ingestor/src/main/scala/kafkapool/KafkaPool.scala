@@ -4,6 +4,7 @@ import java.util
 
 import org.apache.kafka.clients.producer.{ProducerConfig, ProducerRecord, KafkaProducer}
 
+/** Creates a pool of Kafka producers that each executor takes turn using. */
 class KafkaPool(createProducer: () => KafkaProducer[String, String]) extends Serializable {
   lazy val producer = createProducer()
   def send(topic: String, value: String): Unit =
