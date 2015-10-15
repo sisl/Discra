@@ -111,6 +111,7 @@ object Streamer {
     ssc.awaitTermination()
   }
 
+  /** Returns the policy object that resovles conflict for each executor node. */
   private def getPolicy(filename: String = Const.UtilityFile): Policy = {
     val utility = Policy.readUtility(filename) match {
       case Some(rawUtility) =>
