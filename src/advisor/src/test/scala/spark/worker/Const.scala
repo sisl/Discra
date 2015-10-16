@@ -5,6 +5,8 @@ import breeze.numerics.{pow, sqrt}
 import spark.worker.dronestate._
 
 object Const {
+  final val UtilityFile = "<InsertYourOwnUtilityCSVAbsolutePath>"
+
   final val Tolerance = 1e-6
 
   final val state1 = DroneGlobalState(2.0, 4.0, 3.0, sqrt(pow(2.0, 2) + pow(3.0, 2)))

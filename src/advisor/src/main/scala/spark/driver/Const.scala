@@ -1,8 +1,7 @@
 package spark.driver
 
 object Const {
-  // replace the path to the utility data file with the one on your machine
-  final val UtilityFile = "/Users/Icarus/Documents/projects/utm-alpha/data/utility.csv"
+  final val UtilityFile = "<InsertYourOwnUtilityCSVAbsolutePath>"
 
   final val UtilityRows = 5446
   final val UtilityCols = 36

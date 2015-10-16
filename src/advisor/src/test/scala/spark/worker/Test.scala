@@ -16,7 +16,7 @@ object Test {
 
     testGridInd2X()
     testGridInterpolate()
-    val utility = testUtilityRead("/Users/Icarus/Documents/projects/utm-alpha/data/utility.csv")
+    val utility = testUtilityRead(Const.UtilityFile)
     val policy: Policy = testPolicyConstructor(utility)
     testLocalState(policy)
     testPolicy(policy)
