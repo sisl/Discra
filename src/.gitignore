@@ -31,7 +31,7 @@
 *Thumbs.db
 
 # Data files
-# *.csv  # needed for utility.csv
+*.csv
 *.jld
 *.mat
 
@@ -39,7 +39,7 @@
 *.jpg
 *.jpeg
 *.bitmap
-# *.png  # needed for docs/images
+*.png
 
 # Documents
 *.eps
