@@ -8,12 +8,12 @@ First clone the repository to your local directory. Open up your console and typ
 
   git clone "https://github.com/sisl/Discora"
 
-This does not install all the dependencies, which we'll be going through next.
+This step does not install all the dependencies, which we'll be going through next.
 
 Java SDK
 ========
 
-Our code is written in Scala, which uses JVM. Go ahead and download the Java SE Development Kit 8 for your system if you don't already have it.
+Our code is written in Scala, which uses JVM. Download Java SE Development Kit 8 for your system if you don't already have it.
 
 IntelliJ IDEA
 =============
@@ -46,9 +46,9 @@ After all that, we want to import the project from the welcome window:
 Apache Kafka
 ============
 
-While IntelliJ IDEA and SBT already takes care of the necessary Kafka packages for our code, we still need to download Kafka from `here <http://kafka.apache.org/downloads.html>`_ to run the publication-subscription server.
+While IntelliJ IDEA and SBT already takes care of the necessary Kafka packages for our code, we still need to download `Kafka <http://kafka.apache.org/downloads.html>`_ to run the publication-subscription server.
 
 Apache Spark
 ============
 
-If you've used IntelliJ IDEA, you won't have to install Spark outside of it, since the build dependencies include the necessary Spark packages. Otherwise, you can go `here <http://spark.apache.org/downloads.html>`_ and follow the installation instructions.
+If you've used IntelliJ IDEA, you won't have to install Spark outside of it, since the build dependencies include the necessary Spark packages. Otherwise, you can download `Spark <http://spark.apache.org/downloads.html>`_ and follow the installation instructions.

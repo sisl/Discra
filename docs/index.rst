@@ -8,6 +8,13 @@ Discora (Distributed Conflict Resolution Architecture) is a distributed computin
 
 Discora is implemented using Apache Spark and Apache Kafka in Scala, but we've made it so you don't have to worry too much about these APIs. In fact, the architecture is designed to be modular such that you can swap out our conflict avoidance algorithm for your own. In this documentation, we provide a convenient entry point for users to replace our algorithm and test their own work using Discora.
 
+Architecture
+============
+
+The Discora architecture shown below consists of four main components: (i) parallel ingestors that listen to state updates on the simulator server's data feeds, (ii) a belief state database that the ingestors store and read internal belief state representation from, (iii) parallel advisors that publish resolution advisories for drones in potential conflict, and (iv) a publish-subscribe advisory server that our simulator server listens to for resolution advisories. In this repository, we don't implement belief state database since all of the flight state data easily fits in memory.
+
+.. image:: images/architecture.png
+
 In Depth Documentation
 ======================
 
@@ -15,6 +22,6 @@ In Depth Documentation
   :maxdepth: 2
 
   Installation <installation>
-  Running Kafka <kafka>
-  Running Spark <spark>
+  Kafka Server <kafka>
+  Spark Application <spark>
   Policy Entry Point <policy>
