@@ -190,11 +190,7 @@ object Streamer {
 
     // create json string from the Advisory
     implicit val formats = DefaultFormats
-    val json = write(advisory)
-
-    // alert drone through UTM client server and return json string
-    dummyAlertUTM(json, producer)
-    json
+    write(advisory)
   }
 
   /** Returns turn rate from bank angle in rad/s. */
@@ -206,7 +202,4 @@ object Streamer {
   }
 
   private def meter2feet(meter: Double) = Const.Meter2Feet * meter
-
-  // note: to be replaced once UTM client server API for sending advisories is available
-  private def dummyAlertUTM(json: String, p: KafkaPool): Unit = p.send("advisory", json)
 }

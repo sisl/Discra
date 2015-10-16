@@ -54,7 +54,6 @@ class Drone(
 
   /** Simulate drone banking/turning under conflict advisory. */
   private def turn(dt: Double, turnRate: Double): Unit = {
-    // TODO: check turn rate vs bank angle direction definition
     val changeHeading = -turnRate * dt
     val turnRadius = math.abs(speed / turnRate)
 

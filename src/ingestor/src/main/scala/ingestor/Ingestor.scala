@@ -1,14 +1,8 @@
 package ingestor
 
-import java.text.DecimalFormat
-
-import scala.util.Random
-
 import net.liftweb.json._
 
 import kafka.serializer.StringDecoder
-
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import org.apache.log4j.{Level, Logger}
 
@@ -74,12 +68,8 @@ object Ingestor {
       .set("spark.rdd.compress","true")
 
     val ssc = new StreamingContext(conf, Seconds(1))
-
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
-
-    // note: once available, ingest UTM publication stream and produce conflict messages
-    simProducer(conflict, producerPool.value, ssc)  // leave here for local testing
-    // utmProducer(conflict, producerPool.value, ssc)
+    simProducer(conflict, producerPool.value, ssc)
   }
 
   case class Status(
@@ -88,14 +78,6 @@ object Ingestor {
       lon: String,      // in m
       speed: String,    // in m/s
       heading: String)  // in rad
-
-  /** Ingests flight state from UTM pub-sub service to produce conflict messages. */
-  def utmProducer(
-      conflict: String,
-      producer: KafkaPool,
-      ssc: StreamingContext): Unit = {
-    // todo
-  }
 
   /** Ingests simulator app messages from Kafka to produce conflict messages. */
   def simProducer(
@@ -127,24 +109,12 @@ object Ingestor {
     ssc.awaitTermination()
   }
 
+  /** Formats drone flight state into string. */
   def getDroneString(status: Status): String = {
     status.flightId + "%" +
     status.lat + "%" +
     status.lon + "%" +
     status.heading + "%" +
     status.speed + ","
-  }
-
-  def getDummyConflict(randgen: Random, formatter: DecimalFormat): String = {
-    val drones = new Array[String](Const.MaxDrones)
-    for (idrone <- drones.indices) {
-      drones(idrone) =
-        "drone" + idrone + "%" +
-        formatter.format(randgen.nextDouble() * (Const.MaxX - Const.MinX) + Const.MinX) + "%" +
-        formatter.format(randgen.nextDouble() * (Const.MaxY - Const.MinY) + Const.MinY) + "%" +
-        formatter.format(randgen.nextDouble() * (Const.MaxHeading - Const.MinHeading) + Const.MinHeading) + "%" +
-        formatter.format(randgen.nextDouble() * (Const.MaxSpeed - Const.MinSpeed) + Const.MinSpeed)
-    }
-    drones mkString ","
   }
 }
