@@ -2,6 +2,9 @@ package spark.worker.policy
 
 import java.io.File
 
+import net.liftweb.json._
+import net.liftweb.json.Serialization.write
+
 import scala.util.{Try, Success, Failure}
 import scala.util.Random.shuffle
 
@@ -195,7 +198,8 @@ object Policy {
    * bank angle as defined above for the elements of the first return array object
    * in the <searchPolicy> function.
    */
-  def advisories(conflict: Array[(String, DroneGlobalState, Double)]): List[Advisory] =
+  def advisories(conflict: Array[(String, DroneGlobalState, Double)]): List[String] = {
+    implicit val formats = DefaultFormats
     for (idrone <- conflict.indices.toList) yield {
       val state = conflict(idrone)._2
       val bankAngle = conflict(idrone)._3
@@ -207,7 +211,7 @@ object Policy {
 
       val turnRate = bankAngle2turnRate(bankAngle, state.speed)
 
-      Advisory(
+      write(Advisory(
         gufi = conflict(idrone)._1,
         clearOfConflict = clearOfConflict,
         waypoints = List(
@@ -217,7 +221,8 @@ object Policy {
             state.speed.toString,
             state.heading.toString,
             Const.DecisionPeriod.toString,
-            turnRate.toString)))
+            turnRate.toString))))
+    }
   }
 
   /** Returns turn rate from bank angle in rad/s. */

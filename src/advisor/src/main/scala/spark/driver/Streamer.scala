@@ -1,8 +1,5 @@
 package spark.driver
 
-import net.liftweb.json._
-import net.liftweb.json.Serialization.write
-
 import kafka.serializer.StringDecoder
 
 import org.apache.log4j.{Level, Logger}
@@ -131,14 +128,8 @@ object Streamer {
   /** Alerts drones through Kafka pub-sub server and return json string. */
   private def alertDrones(
       conflict: Array[(String, DroneGlobalState, Double)],
-      producer: KafkaPool): String = {
-
-    val advisories = Policy.advisories(conflict)
-    implicit val formats = DefaultFormats
-    val jsons = for (advisory <- advisories) yield write(advisory)
-    jsons.foreach(publishAdvisory(_, producer))
-    write(advisories)
-  }
+      producer: KafkaPool) =
+    Policy.advisories(conflict).foreach(publishAdvisory(_, producer))
 
   /** Publishes advisory to the Kafka server. */
   private def publishAdvisory(json: String, producer: KafkaPool): Unit =
