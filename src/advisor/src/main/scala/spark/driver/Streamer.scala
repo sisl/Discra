@@ -3,8 +3,6 @@ package spark.driver
 import net.liftweb.json._
 import net.liftweb.json.Serialization.write
 
-import breeze.linalg.DenseMatrix
-
 import kafka.serializer.StringDecoder
 
 import org.apache.log4j.{Level, Logger}
@@ -16,7 +14,6 @@ import org.apache.spark.streaming.kafka._
 import kafkapool._
 
 import spark.worker.dronestate._
-import spark.worker.grid._
 import spark.worker.policy._
 
 /**
@@ -79,7 +76,9 @@ object Streamer {
       .set("spark.rdd.compress","true")
 
     val ssc = new StreamingContext(conf, Seconds(1))
-    val policy = ssc.sparkContext.broadcast(getPolicy())
+
+    val policy = ssc.sparkContext.broadcast(Policy.defaultPolicy())
+
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
 
     ssc.checkpoint("ckpt-policy")
@@ -112,24 +111,6 @@ object Streamer {
     ssc.awaitTermination()
   }
 
-  /** Returns the policy object that resovles conflict for each executor node. */
-  private def getPolicy(filename: String = Const.UtilityFile): Policy = {
-    val utility = Policy.readUtility(filename) match {
-      case Some(rawUtility) =>
-        if (rawUtility.cols == Const.UtilityCols && rawUtility.rows == Const.UtilityRows) {
-          println("INFO utility read successfully")
-        } else {
-          println("WARN utility file might have been updated or corrupted")
-        }
-        rawUtility
-
-      case None =>
-        println("WARN utility read unsuccessful, returning empty DenseMatrix")
-        new DenseMatrix[Double](0, 0)
-    }
-    Policy(utility, Const.ActionSet, Grid(Const.S1, Const.S2, Const.S3, Const.S4, Const.S5))
-  }
-
   /** Returns ID-DroneGlobalState pairs. */
   private def getDrones(rawDrones: Array[String]): Array[(String, DroneGlobalState)] =
     rawDrones.map(unpackDrone)
@@ -147,59 +128,19 @@ object Streamer {
     (id, drone)
   }
 
-  case class Advisories(advisories: List[Advisory])
-  case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
-  case class Waypoint(
-      lat: String,      // m
-      lon: String,      // m
-      speed: String,    // m/s
-      heading: String,  // rad
-      period: String,   // s
-      turn: String)     // rad/s
-
-  /** Alerts drones through UTM client server and return json string. */
+  /** Alerts drones through Kafka pub-sub server and return json string. */
   private def alertDrones(
       conflict: Array[(String, DroneGlobalState, Double)],
       producer: KafkaPool): String = {
 
-    val advisory = Advisories {
-      for (idrone <- conflict.indices.toList) yield {
-        val state = conflict(idrone)._2
-        val bankAngle = conflict(idrone)._3
-
-        val clearOfConflict = bankAngle match {
-          case Const.ClearOfConflict => "true"
-          case _ => "false"
-        }
-
-        val turnRate = bankAngle2turnRate(bankAngle, state.speed)
-
-        Advisory(
-          gufi = conflict(idrone)._1,
-          clearOfConflict = clearOfConflict,
-          waypoints = List(
-            Waypoint(
-              state.latitude.toString,
-              state.longitude.toString,
-              state.speed.toString,
-              state.heading.toString,
-              Const.DecisionPeriod.toString,
-              turnRate.toString)))
-      }
-    }
-
-    // create json string from the Advisory
+    val advisories = Policy.advisories(conflict)
     implicit val formats = DefaultFormats
-    write(advisory)
+    val jsons = for (advisory <- advisories) yield write(advisory)
+    jsons.foreach(publishAdvisory(_, producer))
+    write(advisories)
   }
 
-  /** Returns turn rate from bank angle in rad/s. */
-  private def bankAngle2turnRate(bankAngle: Double, speed: Double): Double = {
-    bankAngle match {
-      case Const.ClearOfConflict => 0.0
-      case _ => Const.G * math.tan(bankAngle) / speed
-    }
-  }
-
-  private def meter2feet(meter: Double) = Const.Meter2Feet * meter
+  /** Publishes advisory to the Kafka server. */
+  private def publishAdvisory(json: String, producer: KafkaPool): Unit =
+    producer.send("advisory", json)
 }

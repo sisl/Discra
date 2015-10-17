@@ -160,4 +160,71 @@ object Policy {
       case Success(utility) => Some(utility)
     }
   }
+
+  /** Returns the default policy object that resovles conflict for each executor node. */
+  def defaultPolicy(): Policy = {
+    val utility = Policy.readUtility(Const.UtilityFile) match {
+      case Some(rawUtility) =>
+        if (rawUtility.cols == Const.UtilityCols && rawUtility.rows == Const.UtilityRows) {
+          println("INFO utility read successfully")
+        } else {
+          println("WARN utility file might have been updated or corrupted")
+        }
+        rawUtility
+
+      case None =>
+        println("WARN utility read unsuccessful, returning empty DenseMatrix")
+        new DenseMatrix[Double](0, 0)
+    }
+    Policy(utility, Const.ActionSet, Grid(Const.S1, Const.S2, Const.S3, Const.S4, Const.S5))
+  }
+
+  /** These case classes define the JSON format for each advisory. */
+  case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
+  case class Waypoint(
+      lat: String,      // m
+      lon: String,      // m
+      speed: String,    // m/s
+      heading: String,  // rad
+      period: String,   // s
+      turn: String)     // rad/s
+
+  /**
+   * Returns a list of JSON-formatted advisories. <conflict> elements are tuples:
+   * (gufi, drone global state, advisory = bank angle). Note that each advisory is a
+   * bank angle as defined above for the elements of the first return array object
+   * in the <searchPolicy> function.
+   */
+  def advisories(conflict: Array[(String, DroneGlobalState, Double)]): List[Advisory] =
+    for (idrone <- conflict.indices.toList) yield {
+      val state = conflict(idrone)._2
+      val bankAngle = conflict(idrone)._3
+
+      val clearOfConflict = bankAngle match {
+        case Const.ClearOfConflict => "true"
+        case _ => "false"
+      }
+
+      val turnRate = bankAngle2turnRate(bankAngle, state.speed)
+
+      Advisory(
+        gufi = conflict(idrone)._1,
+        clearOfConflict = clearOfConflict,
+        waypoints = List(
+          Waypoint(
+            state.latitude.toString,
+            state.longitude.toString,
+            state.speed.toString,
+            state.heading.toString,
+            Const.DecisionPeriod.toString,
+            turnRate.toString)))
+  }
+
+  /** Returns turn rate from bank angle in rad/s. */
+  private def bankAngle2turnRate(bankAngle: Double, speed: Double): Double = {
+    bankAngle match {
+      case Const.ClearOfConflict => 0.0
+      case _ => Const.G * math.tan(bankAngle) / speed
+    }
+  }
 }
