@@ -2,8 +2,8 @@
 Kafka Server
 ============
 
-Kafka in Discora
-================
+Kafka in Discra
+===============
 
 The advisories publish-subscribe server and the internal conflict message relay server between the ingestor and advisor servers are implemented using Kafka. Designed as a unified, high-throughput, low-latency platform for handling real-time data feeds, Kafka is an open-source project with active industry use. In a distributed message broker, producers publish data tagged by *topics* and consumers subscribe to data of a particular topic.
 

@@ -2,8 +2,8 @@
 Spark Application
 =================
 
-Spark in Discora
-================
+Spark in Discra
+===============
 
 The ingestor and advisor servers are implemented on the Spark Streaming library, which provides a scalable, fault-tolerant stream processing system. In brief, the Spark programming model is centered around the resilient distributed datasets (RDDs) abstraction. RDDs are distributed, partitioned collections of objects that are manipulated through parallel transformations that, in our case, are algorithms that process flight states and conflict messages.
 
@@ -28,8 +28,8 @@ Running Spark
 
 Unlike Kafka, everything that needs to run the Spark application already exists in the repository. You can simply run the application from IntelliJ IDEA by clicking the run button from the right-click drop-down menu on the files found at
 
-  1. ``[discora-root]/src/advisor/src/test/scala/spark/driver/Test.scala``
-  2. ``[discora-root]/src/ingestor/src/test/scala/ingestor/Test.scala``
-  3. ``[discora-root]/src/simulator/src/test/scala/simulator/Test.scala``
+  1. ``[discra-root]/src/advisor/src/test/scala/spark/driver/Test.scala``
+  2. ``[discra-root]/src/ingestor/src/test/scala/ingestor/Test.scala``
+  3. ``[discra-root]/src/simulator/src/test/scala/simulator/Test.scala``
 
 Note that you need to run these applications in that order, otherwise the simulator server will be sending flight state updates with no server listening and processing that information.

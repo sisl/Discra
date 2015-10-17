@@ -1,12 +1,12 @@
 ==================
-Installing Discora
+Installing Discra
 ==================
 
 First clone the repository to your local directory. Open up your console and type
 
 ::
 
-  git clone "https://github.com/sisl/Discora"
+  git clone "https://github.com/sisl/Discra"
 
 This step does not install all the dependencies, which we'll be going through next.
 
@@ -24,7 +24,7 @@ After all that, we want to import the project from the welcome window:
 
   1. Click the "Import Project" button, which will bring up a window telling you to select the directory to import.
 
-  2. Go to the root of the Discora directory, expand the "src" folder, select the "advisor" folder, and click the OK button. Warning: Do not import the "src" or "root" folder!
+  2. Go to the root of the Discra directory, expand the "src" folder, select the "advisor" folder, and click the OK button. Warning: Do not import the "src" or "root" folder!
 
   3. Select the "Import project from external model" option and choose "SBT" before clicking the Next button.
 
@@ -34,14 +34,14 @@ After all that, we want to import the project from the welcome window:
 
   6. The project format should be .idea (directory based), and you shouldn't have to mess with the global SBT settings.
 
-  7. With all that out of the way, click "Finish" and wait for IntelliJ IDEA to import your local version of Discora. You can ignore the warning about the unregistered VCS root and the Scala version for now.
+  7. With all that out of the way, click "Finish" and wait for IntelliJ IDEA to import your local version of Discra. You can ignore the warning about the unregistered VCS root and the Scala version for now.
 
   8. Repeat the above steps for the "ingestor" and "simulator" directories. We do this as they're separate Spark applications.
 
-  9. For our conflict avoidance algorithm, we've included a smaller version of our utility function lookup table called ``utility.csv``. In order for your local Discora advisor application to find it, you'll have to input the absolute path to the lookup table, otherwise it'll throw a warning about no utility table found. Simply replace the dummy path ``<InsertYourOwnUtilityCSVAbsolutePath>`` in the two following files.
+  9. For our conflict avoidance algorithm, we've included a smaller version of our utility function lookup table called ``utility.csv``. In order for your local Discra advisor application to find it, you'll have to input the absolute path to the lookup table, otherwise it'll throw a warning about no utility table found. Simply replace the dummy path ``<InsertYourOwnUtilityCSVAbsolutePath>`` in the two following files.
 
-    (a) ``[discora-root]/src/advisor/src/main/scala/spark/driver/Const.scala``
-    (b) ``[discora-root]/src/advisor/src/test/scala/spark/worker/Const.scala``
+    (a) ``[discra-root]/src/advisor/src/main/scala/spark/driver/Const.scala``
+    (b) ``[discra-root]/src/advisor/src/test/scala/spark/worker/Const.scala``
 
 Apache Kafka
 ============
