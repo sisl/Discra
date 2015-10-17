@@ -7,7 +7,11 @@ A key point of the Discra architecture is to provide a convenient framework for 
 Policy in Discra
 ================
 
-``Policy`` is a class in Discra that implements the conflict resolution algorithm. Once instantiated, the ``Policy`` object is broadcasted by the advisor server's Spark driver to its worker nodes and used to resolve conflicts.
+``Policy`` is a class in Discra that implements the conflict resolution algorithm. Once instantiated, the ``Policy`` object is broadcast by the advisor server's Spark driver to its worker nodes and used to resolve conflicts.
+
+There are three functions that the user must define
+
+When the advisor application is started up, it will look in the ``Policy.scala`` file for the ``defaultPolicy`` class method, which instantiates a ``Policy`` object defined by the user. In our case, ``defaultPolicy`` loads the utility function lookup table and the set of advisories, conducts basic verification tests, and returns the object.
 
 Interaction points::
 

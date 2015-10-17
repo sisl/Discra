@@ -96,7 +96,7 @@ object Streamer {
       .map { conflict =>  // generate advisories from policy
         val ids = conflict.map(_._1)
         val drones = conflict.map(_._2)
-        val advs = policy.value.searchPolicy(drones)._1
+        val advs = policy.value.searchPolicy(drones)
         (ids, drones, advs).zipped.toArray
       }
 

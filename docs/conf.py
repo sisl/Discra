@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Discora documentation build configuration file, created by
+# Discra documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  2 03:59:02 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Discora'
+project = u'Discra'
 copyright = u'2015, Hao Yi Ong and Mykel J. Kochenderfer'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -181,7 +181,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'DiscoraDoc'
+htmlhelp_basename = 'DiscraDoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------

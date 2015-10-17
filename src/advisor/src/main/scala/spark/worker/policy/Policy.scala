@@ -27,7 +27,7 @@ class Policy(
   final val IndexCOC = DimensionActionSpace - 1
 
   /** Alternating maximization iterative search for pairwise encounters. */
-  def searchPolicy(drones: Array[DroneGlobalState]): (Array[Double], Double, Int) = {
+  def searchPolicy(drones: Array[DroneGlobalState]): Array[Double] = {
     val currActionIndices = Array.fill[Int](drones.length)(IndexCOC)
     val bestActionIndices = Array.fill[Int](drones.length)(IndexCOC)
 
@@ -58,7 +58,7 @@ class Policy(
     if (niter == Policy.MaxIterSearch) {
       println("WARN MaxCountReached: Maximum number of policy search iterations reached")
     }
-    (idx2val(bestActionIndices, actionSet), bestUtil, niter)
+    idx2val(bestActionIndices, actionSet)
   }
 
   /** Compute best of worst-case (max-min) utility for all pairwise encounters with ownship. */

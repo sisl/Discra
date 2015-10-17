@@ -162,7 +162,7 @@ object Test {
         DenseMatrix.zeros[Double](Const.Resolution, Const.Resolution),
         DenseMatrix.zeros[Double](Const.Resolution, Const.Resolution))
 
-    val drones =
+    val drones: Array[DroneGlobalState] =
       Array(
         DroneGlobalState(0.0, 0.0, 0.0, 10.0),
         DroneGlobalState(1000.0, 800.0, 3.141592653589793, 10.0),
@@ -177,7 +177,7 @@ object Test {
       drones(0).latitude = xs(ix)
       drones(0).longitude = ys(iy)
 
-      val jointAction = policy.searchPolicy(drones)._1
+      val jointAction = policy.searchPolicy(drones)
 
       // assign color for action based on a gradient
       for (idrone <- jointAction.indices) {
