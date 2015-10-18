@@ -89,20 +89,18 @@ object Streamer {
         String, String, StringDecoder, StringDecoder](
           ssc, kafkaParams, topicsSet)
 
-    // whitespace-separated set of conflicts, which are in turn comma-separated DroneGlobalStates
-    val advisories = rawConflicts
-      .flatMap(_._2.split(" "))  // separate into conflict strings
-      .map(rawDrones => getDrones(rawDrones.split(",")))  // build drone objects for policy
-      .map { conflict =>  // generate advisories from policy
+    rawConflicts // whitespace-separated set of conflicts, which are comma-separated DroneGlobalStates
+      .flatMap(_._2.split(" "))  // separate into conflict strings (concatenated flight states)
+      .map(rawDrones => getDrones(rawDrones.split(",")))  // build internal flight state objects
+      .map { conflict =>  // compute advisories
         val ids = conflict.map(_._1)
         val drones = conflict.map(_._2)
-        val advs = policy.value.searchPolicy(drones)
-        (ids, drones, advs).zipped.toArray
+        policy.value.advisories(drones, ids)
       }
+      .map{ advs => advs.foreach(publishAdvisory(_, producerPool.value)) }  // publish advisories
+      .print(0)  // need output to run ssc
 
     ssc.checkpoint("ckpt-advisory")
-
-    advisories.map(alertDrones(_, producerPool.value)).print(0)  // need output to run ssc
 
     ssc.start()
     ssc.awaitTermination()
@@ -124,12 +122,6 @@ object Streamer {
 
     (id, drone)
   }
-
-  /** Alerts drones through Kafka pub-sub server and return json string. */
-  private def alertDrones(
-      conflict: Array[(String, DroneGlobalState, Double)],
-      producer: KafkaPool) =
-    Policy.advisories(conflict).foreach(publishAdvisory(_, producer))
 
   /** Publishes advisory to the Kafka server. */
   private def publishAdvisory(json: String, producer: KafkaPool): Unit =

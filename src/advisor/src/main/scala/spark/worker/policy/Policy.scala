@@ -26,7 +26,16 @@ class Policy(
   final val IndexTerminalState = DimensionStateSpace - 1
   final val IndexCOC = DimensionActionSpace - 1
 
-  /** Alternating maximization iterative search for pairwise encounters. */
+  /**
+   * Alternating maximization iterative search for pairwise encounters. Returns
+   * an array of JSON-formatted advisory strings.
+   */
+  def advisories(drones: Array[DroneGlobalState], ids: Array[String]): Array[String] ={
+    val advs = searchPolicy(drones)
+    Policy.advisories(drones, ids, advs)
+  }
+
+  /** Alternating maximization iterative search algorithm using max-min utility fusion. */
   def searchPolicy(drones: Array[DroneGlobalState]): Array[Double] = {
     val currActionIndices = Array.fill[Int](drones.length)(IndexCOC)
     val bestActionIndices = Array.fill[Int](drones.length)(IndexCOC)
@@ -40,7 +49,7 @@ class Policy(
     while (niter < Policy.MaxIterSearch && solutionImproving) {
       solutionImproving = false
 
-      val droneOrder = shuffle(drones.indices.toList)  // for fairness
+      val droneOrder = shuffle(drones.indices.toList) // for fairness
       for (idrone <- droneOrder) {
         val (actionIndex, util) = maxmin(idrone, drones, currActionIndices)
         utils(idrone) = util
@@ -58,7 +67,8 @@ class Policy(
     if (niter == Policy.MaxIterSearch) {
       println("WARN MaxCountReached: Maximum number of policy search iterations reached")
     }
-    idx2val(bestActionIndices, actionSet)
+
+    idx2val(bestActionIndices, actionSet)  // map advisory index to advisories
   }
 
   /** Compute best of worst-case (max-min) utility for all pairwise encounters with ownship. */
@@ -185,24 +195,28 @@ object Policy {
   /** These case classes define the JSON format for each advisory. */
   case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
   case class Waypoint(
-      lat: String,      // m
-      lon: String,      // m
-      speed: String,    // m/s
-      heading: String,  // rad
-      period: String,   // s
-      turn: String)     // rad/s
+                       lat: String,      // m
+                       lon: String,      // m
+                       speed: String,    // m/s
+                       heading: String,  // rad
+                       period: String,   // s
+                       turn: String)     // rad/s
 
   /**
-   * Returns a list of JSON-formatted advisories. <conflict> elements are tuples:
-   * (gufi, drone global state, advisory = bank angle). Note that each advisory is a
-   * bank angle as defined above for the elements of the first return array object
-   * in the <searchPolicy> function.
+   * Returns a list of JSON-formatted advisories. Each advisory is a bank
+   * angle as defined above for the elements of the first return array object
+   * in the <advisories> instance method.
    */
-  def advisories(conflict: Array[(String, DroneGlobalState, Double)]): List[String] = {
+  def advisories(
+      drones: Array[DroneGlobalState],
+      ids: Array[String],
+      advs: Array[Double]): Array[String] = {
+
     implicit val formats = DefaultFormats
-    for (idrone <- conflict.indices.toList) yield {
-      val state = conflict(idrone)._2
-      val bankAngle = conflict(idrone)._3
+
+    for (idrone <- drones.indices.toArray) yield {
+      val state = drones(idrone)
+      val bankAngle = advs(idrone)
 
       val clearOfConflict = bankAngle match {
         case Const.ClearOfConflict => "true"
@@ -212,7 +226,7 @@ object Policy {
       val turnRate = bankAngle2turnRate(bankAngle, state.speed)
 
       write(Advisory(
-        gufi = conflict(idrone)._1,
+        gufi = ids(idrone),
         clearOfConflict = clearOfConflict,
         waypoints = List(
           Waypoint(
