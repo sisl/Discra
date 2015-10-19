@@ -45,4 +45,6 @@ object TestConst {
       NoiseTurnRateClear,
       NoiseTurnRateConflict,
       new Random(RandSeed))
+
+  final val StatusUpdatePeriod = 5000  // in ms
 }

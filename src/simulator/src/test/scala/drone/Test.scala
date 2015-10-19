@@ -51,7 +51,8 @@ object Test {
 
     // test wrong advisory message
     try {
-      drone0.nextState(advisories(1))
+      drone0.advisory = Some(advisories(0))
+      drone0.nextState(TestConst.StatusUpdatePeriod)
     } catch {
       case iae: IllegalArgumentException => println(" exception caught")
     }
@@ -69,8 +70,10 @@ object Test {
       x1(it) = drone1.latitude
       y1(it) = drone1.longitude
 
-      drone0.nextState(advisories(0))
-      drone1.nextState(advisories(1))
+      drone0.advisory = Some(advisories(0))
+      drone1.advisory = Some(advisories(1))
+      drone0.nextState(TestConst.StatusUpdatePeriod)
+      drone1.nextState(TestConst.StatusUpdatePeriod)
     }
 
     val f = Figure()
