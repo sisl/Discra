@@ -193,6 +193,7 @@ object Policy {
   }
 
   /** These case classes define the JSON format for each advisory. */
+  case class Advisories(advisories: List[Advisory])
   case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
   case class Waypoint(
                        lat: String,      // m
@@ -214,29 +215,33 @@ object Policy {
 
     implicit val formats = DefaultFormats
 
-    for (idrone <- drones.indices.toArray) yield {
-      val state = drones(idrone)
-      val bankAngle = advs(idrone)
+    val jsonadvs: List[Advisory] =
+      for (idrone <- drones.indices.toList) yield {
+        val state = drones(idrone)
+        val bankAngle = advs(idrone)
 
-      val clearOfConflict = bankAngle match {
-        case Const.ClearOfConflict => "true"
-        case _ => "false"
+        val clearOfConflict = bankAngle match {
+          case Const.ClearOfConflict => "true"
+          case _ => "false"
+        }
+
+        val turnRate = bankAngle2turnRate(bankAngle, state.speed)
+
+        Advisory(
+          gufi = ids(idrone),
+          clearOfConflict = clearOfConflict,
+          waypoints = List(
+            Waypoint(
+              state.latitude.toString,
+              state.longitude.toString,
+              state.speed.toString,
+              state.heading.toString,
+              Const.DecisionPeriod.toString,
+              turnRate.toString)))
       }
 
-      val turnRate = bankAngle2turnRate(bankAngle, state.speed)
-
-      write(Advisory(
-        gufi = ids(idrone),
-        clearOfConflict = clearOfConflict,
-        waypoints = List(
-          Waypoint(
-            state.latitude.toString,
-            state.longitude.toString,
-            state.speed.toString,
-            state.heading.toString,
-            Const.DecisionPeriod.toString,
-            turnRate.toString))))
-    }
+    // return single json string of advisories for event-loop hack in simulator
+    Array(write(Advisories(jsonadvs)))
   }
 
   /** Returns turn rate from bank angle in rad/s. */

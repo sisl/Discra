@@ -89,15 +89,22 @@ object Streamer {
         String, String, StringDecoder, StringDecoder](
           ssc, kafkaParams, topicsSet)
 
-    rawConflicts // whitespace-separated set of conflicts, which are comma-separated DroneGlobalStates
+    rawConflicts  // whitespace-separated set of conflicts, which are comma-separated DroneGlobalStates
       .flatMap(_._2.split(" "))  // separate into conflict strings (concatenated flight states)
       .map(rawDrones => getDrones(rawDrones.split(",")))  // build internal flight state objects
       .map { conflict =>  // compute advisories
         val ids = conflict.map(_._1)
         val drones = conflict.map(_._2)
-        policy.value.advisories(drones, ids)
+        if (drones.length > 1) {  // ignore singular drone "conflicts"
+          Some(policy.value.advisories(drones, ids))
+        } else {
+          None
+        }
       }
-      .map{ advs => advs.foreach(publishAdvisory(_, producerPool.value)) }  // publish advisories
+      .map {
+        case Some(advs) =>
+          advs.foreach(publishAdvisory(_, producerPool.value))
+      }
       .print(0)  // need output to run ssc
 
     ssc.checkpoint("ckpt-advisory")

@@ -2,16 +2,12 @@ package simulator
 
 import java.text.DecimalFormat
 
-import java.util
-
 import scala.collection.mutable
 
 import kafka.serializer.StringDecoder
 
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization._
-
-import org.apache.kafka.clients.producer.{ProducerConfig, KafkaProducer}
 
 import org.apache.log4j.{Level, Logger}
 
@@ -81,8 +77,6 @@ object Simulator {
       Logger.getLogger("org").setLevel(Level.WARN)
     }
 
-    val drones: mutable.HashMap[String, Drone] = Const.DummyDrones
-
     // local StreamingContext with 2 working threads and batch interval of 1 second
     val conf = new SparkConf()
       .setAppName("DroneSimulator")
@@ -93,14 +87,16 @@ object Simulator {
     val ssc = new StreamingContext(conf, Seconds(1))
     val producerPool = ssc.sparkContext.broadcast(KafkaPool(brokers))
 
+    val rawDrones: mutable.HashMap[String, Drone] = Const.DummyDrones
+    val drones = ssc.sparkContext.broadcast(rawDrones)
+
     // initialize process by sending status
-    drones.foreach { droneElem =>
-      val status = jsonStatus(droneElem._2)
+    drones.value.values.foreach { drone =>
+      val status = jsonStatus(drone)
       producerPool.value.send("status", status)
     }
 
-    // dummy listener to "advisory" topic (instead of client server)
-    // direct Kafka stream with brokers and topics
+    // direct Kafka stream with brokers and topics for advisories
     val topicsSet = "advisory".split(",").toSet
     val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers)
 
@@ -109,20 +105,15 @@ object Simulator {
         ssc, kafkaParams, topicsSet)
 
     // execute advisories if one exists and simulate drone flight
-    advisoryStream.map { jsonAdvisories =>
-      val advisories = DroneAdvisory.getDroneAdvisories(jsonAdvisories._2)
-      advisories.foreach { droneAdvisory =>
-        drones(droneAdvisory.gufi).advisory = Some(droneAdvisory)
-        val status = jsonStatus(drones(droneAdvisory.gufi))
-        producerPool.value.send("status", status)
+    advisoryStream.map { jsonAdvisory =>
+      val advisories = DroneAdvisory.getDroneAdvisories(jsonAdvisory._2)
+      advisories.foreach{ advisory =>
+        val drone = drones.value(advisory.gufi)
+        drone.advisory = Some(advisory)
+        drone.nextState(Const.StatusUpdatePeriod)
+        producerPool.value.send("status", jsonStatus(drone))
       }
     }.print(0)  // need output to run ssc
-
-    // update all drone trajectories
-    drones.values.foreach(_.nextState(Const.StatusUpdatePeriod))
-
-    // hack to simulate 5 seconds passing; assume parallel workers
-    Thread.sleep(Const.StatusUpdatePeriod)
 
     ssc.checkpoint("ckpt-advisory")
 

@@ -2,6 +2,8 @@ package drone
 
 import net.liftweb.json._
 
+case class Advisories(advisories: List[Advisory])
+case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
 case class Waypoint(
     lat: String,      // m
     lon: String,      // m
@@ -9,10 +11,6 @@ case class Waypoint(
     heading: String,  // rad
     period: String,   // s
     turn: String)     // rad/s
-
-case class Advisory(gufi: String, clearOfConflict: String, waypoints: List[Waypoint])
-
-case class Advisories(advisories: List[Advisory])
 
 class DroneAdvisory(
     val gufi: String,
@@ -33,6 +31,24 @@ object DroneAdvisory {
   /**
    * Builds a custom DroneAdvisory from an Advisories-based json string for
    * local interpretation. Assume <raw> only has a single Waypoint for each
+   * advisory.
+   */
+  def getDroneAdvisory(raw: String): DroneAdvisory = {
+    val rawAdvisory = parse(raw).extract[Advisory]
+    new DroneAdvisory(
+      gufi = rawAdvisory.gufi,
+      clearOfConflict = rawAdvisory.clearOfConflict match {
+        case "true" => true
+        case "false" => false
+        case _ => throw new IllegalArgumentException("invalid clearOfConflict indicator string")
+      },
+      turnRate = rawAdvisory.waypoints.head.turn.toDouble,
+      period = rawAdvisory.waypoints.head.period.toDouble)
+  }
+
+  /**
+   * Builds a list of custom DroneAdvisory from an Advisories-based json string
+   * for local interpretation. Assume <raw> only has a single Waypoint for each
    * advisory.
    */
   def getDroneAdvisories(raw: String): Array[DroneAdvisory] = {
