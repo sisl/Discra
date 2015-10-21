@@ -40,7 +40,7 @@ After all that, we want to import the project from the welcome window:
 
   9. For our conflict avoidance algorithm, we've included a smaller version of our utility function lookup table called ``utility.csv``. In order for your local Discra advisor application to find it, you'll have to input the absolute path to the lookup table, otherwise it'll throw a warning about no utility table found. Simply replace the dummy path ``<InsertYourOwnUtilityCSVAbsolutePath>`` in the two following files.
 
-    (a) ``[discra-root]/src/advisor/src/main/scala/spark/driver/Const.scala``
+    (a) ``[discra-root]/src/advisor/src/main/scala/spark/worker/policy/Const.scala``
     (b) ``[discra-root]/src/advisor/src/test/scala/spark/worker/Const.scala``
 
 Apache Kafka
