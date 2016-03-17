@@ -11,7 +11,7 @@ Discra is implemented using Apache Spark and Apache Kafka in Scala, but we've ma
 Architecture
 ============
 
-The Discra architecture shown below consists of four main components: (i) parallel ingestors that listen to state updates on the simulator server's data feeds, (ii) a belief state database that the ingestors store and read internal belief state representation from, (iii) parallel advisors that publish resolution advisories for drones in potential conflict, and (iv) a publish-subscribe advisory server that our simulator server listens to for resolution advisories. In this repository, we don't implement belief state database since all of the flight state data easily fits in memory.
+The Discra architecture shown below consists of four main components: (i) parallel ingestors that listen to state updates on the simulator server's data feeds, (ii) a belief state database that the ingestors store and read internal belief state representation from, (iii) parallel advisors that publish resolution advisories for drones in potential conflict, and (iv) a publish-subscribe advisory server that our simulator server listens to for resolution advisories. In this repository, we don't implement the belief state database since all of the flight state data fits comfortably in memory.
 
 .. image:: images/architecture.png
 
